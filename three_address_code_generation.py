@@ -47,8 +47,7 @@ class ThreeAddressCodeGeneration:
                     self.l_junction_counter += 4
                 if index == 4:
                     self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
-                    # self.three_address_code_part.append(['goto', f'L{l_junction_counter + 3}'])
-                    # self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
+                    temporary_l_junction_counter = self.l_junction_counter
                     self.l_junction_counter += 1
                     self.three_address_code[f'L{l_junction_counter + 2}'] = [['goto', f'L{self.l_junction_counter}']]
             if ast[0] == 'for':
@@ -96,8 +95,10 @@ class ThreeAddressCodeGeneration:
             self.three_address_code[f'L{l_junction_counter}'].append(
                 ['goto', f'L{l_junction_counter + 2}'])
             self.three_address_code[f'L{l_junction_counter + 1}'] = [['goto', f'L{l_junction_counter + 4}']]
-            # self.three_address_code_part.append(['goto', f'L{l_junction_counter + 3}'])
-            # self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
+            self.three_address_code[f'L{self.l_junction_counter}'].append(
+                ['goto', f'L{self.l_junction_counter + 1}'])
+            self.three_address_code[f'L{temporary_l_junction_counter}'].append(
+                ['goto', f'L{self.l_junction_counter + 1}'])
             self.l_junction_counter += 1
         if ast[0] == 'for':
             self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
