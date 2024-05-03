@@ -72,7 +72,7 @@ class ThreeAddressCodeGeneration:
             self.three_address_code_part.append(
                 [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1], ast[2])])
             return time_variable_t
-        if ast[0] in ['=', '>', '<', '>=', '<='] and len(ast) == 3:
+        if ast[0] in ['=', '>', '<', '>=', '<=', '<>'] and len(ast) == 3:
             self.t_counter += 1
             time_variable_t = f't{self.t_counter}'
             self.three_address_code_part.append(
@@ -109,6 +109,8 @@ class ThreeAddressCodeGeneration:
             self.three_address_code[f'L{l_junction_counter}'].append(
                 ['goto', f'L{l_junction_counter + 1}'])
             self.three_address_code[f'L{l_junction_counter + 1}'] = [['goto', f'L{l_junction_counter + 2}']]
+        if ast[0] == 'while':
+            print(ast)
         if ast[0] == 'function' or ast[0] == 'procedure':
             self.flag_function_procedure = True
             self.name_function_procedure = ast[1]
