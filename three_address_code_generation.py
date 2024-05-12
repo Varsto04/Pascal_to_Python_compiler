@@ -38,7 +38,7 @@ class ThreeAddressCodeGeneration:
         self.flag_function_procedure = False
 
     def __dfs(self, ast):
-        if ast[0] in ['if', 'for']:
+        if ast[0] in ['if', 'for', 'while']:
             l_junction_counter = self.l_junction_counter
         for index, item in enumerate(ast):
             if ast[0] == 'if':
@@ -54,6 +54,10 @@ class ThreeAddressCodeGeneration:
                 if index == 3:
                     self.three_address_code_part.append(
                         [ast[1], ':=', ast[2][1]])
+                    self.__inserting_data_into_L_block(f'L{l_junction_counter}')
+                    self.l_junction_counter += 2
+            if ast[0] == 'while':
+                if index == 3:
                     self.__inserting_data_into_L_block(f'L{l_junction_counter}')
                     self.l_junction_counter += 2
             if isinstance(item, list):
@@ -107,10 +111,26 @@ class ThreeAddressCodeGeneration:
             self.three_address_code[f'L{self.l_junction_counter}'].append(
                 ['goto', f'L{self.l_junction_counter + 1}'])
             self.three_address_code[f'L{l_junction_counter}'].append(
-                ['goto', f'L{l_junction_counter + 1}'])
+                ['if', ast[1], '<', ast[2][2], 'goto', f'L{l_junction_counter + 1}'])
+            self.three_address_code[f'L{l_junction_counter}'].append(
+                ['goto', f'L{self.l_junction_counter + 1}'])
             self.three_address_code[f'L{l_junction_counter + 1}'] = [['goto', f'L{l_junction_counter + 2}']]
+            self.l_junction_counter += 1
         if ast[0] == 'while':
+            self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
+            self.three_address_code[f'L{self.l_junction_counter}'].append(
+                ['if', ast[1], 'goto', f'L{l_junction_counter + 1}'])
+            self.three_address_code[f'L{self.l_junction_counter}'].append(
+                ['goto', f'L{self.l_junction_counter + 1}'])
+            self.three_address_code[f'L{l_junction_counter}'].append(
+                ['if', ast[1], 'goto', f'L{l_junction_counter + 1}'])
+            self.three_address_code[f'L{l_junction_counter}'].append(
+                ['goto', f'L{self.l_junction_counter + 1}'])
+            self.three_address_code[f'L{l_junction_counter + 1}'] = [['goto', f'L{l_junction_counter + 2}']]
+            self.l_junction_counter += 1
+        if ast[0] == 'writeln' or ast[0] == 'println':
             print(ast)
+            print(self.three_address_code_part)
         if ast[0] == 'function' or ast[0] == 'procedure':
             self.flag_function_procedure = True
             self.name_function_procedure = ast[1]
