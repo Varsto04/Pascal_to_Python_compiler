@@ -101,7 +101,7 @@ class SemanticAnalysis:
                     self.symbol_table_stack[self.name_table] = self.symbol_table[self.name_table].symbols
                 if isinstance(item, str):
                     if re.compile(r'[A-Za-z_][\w_]*').match(item) and tokens.count(item) == 0 and \
-                            item not in ['writeln', 'readln', 'True', 'False']:
+                            item not in ['write', 'read', 'True', 'False']:
                         if not any(item in array for array in self.declared_variables):
                             raise CustomError(f"NameError: name '{item}' is not defined")
                         if item in self.functions and ast[1] == '(' and ast[-1] == ')':
@@ -177,7 +177,7 @@ class SemanticAnalysis:
         if str(data) == 'True' or str(data) == 'False':
             return 'boolean'
         elif re.compile(r'[A-Za-z_][\w_]*').match(str(data)) and tokens.count(str(data)) == 0 and \
-                            str(data) not in ['writeln', 'readln', 'True', 'False']:
+                            str(data) not in ['write', 'read', 'True', 'False']:
             return self.__getting_data_about_variable(str(data))[1]
         return 'string'
 
