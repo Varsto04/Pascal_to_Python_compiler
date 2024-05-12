@@ -454,21 +454,29 @@ def p_sub_header(p):
 				mas_data_types.append(item)
 
 	if len(p) == 4 or len(p) == 6:
-		getting_data_types(p[3][1])
-		for mas_data_types_part in mas_data_types:
-			if mas_data_types_part != None:
-				str_data_types += mas_data_types_part
 		data_types = []
-		str_data_types = str_data_types.split(';')
-		for str_data_types_part in str_data_types:
-			elements = str_data_types_part.split(':')
-			nums = elements[0].split(',')
-			inner_array = [[num.strip() for num in nums], [elements[1]]]
-			data_types.append(inner_array)
+		data_types_arguments = []
+		if len(p) == 6:
+			getting_data_types(p[3][1])
+			for mas_data_types_part in mas_data_types:
+				if mas_data_types_part != None:
+					str_data_types += mas_data_types_part
+			str_data_types = str_data_types.split(';')
+			for str_data_types_part in str_data_types:
+				elements = str_data_types_part.split(':')
+				nums = elements[0].split(',')
+				inner_array = [[num.strip() for num in nums], [elements[1]]]
+				data_types.append(inner_array)
+
+			for subarr in data_types:
+				first_array_length = len(subarr[0])
+				second_array_value = subarr[1][0]
+				for i in range(first_array_length):
+					data_types_arguments.append(second_array_value)
 
 		if p[1] == 'function':
 			number_function_arguments = sum(len(arr[0]) for arr in data_types)
-			symbol_stack.top().symbols[p[2]] = [None, 'function', number_function_arguments]
+			symbol_stack.top().symbols[p[2]] = [None, 'function', number_function_arguments, p[5], data_types_arguments]
 		else:
 			symbol_stack.top().symbols[p[2]] = [None, 'procedure']
 
