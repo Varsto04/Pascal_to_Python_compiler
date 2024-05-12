@@ -174,6 +174,7 @@ class ThreeAddressCodeGeneration:
                 self.three_address_code[self.name_function_procedure] = self.three_address_code_part
                 self.flag_function_procedure = False
                 self.three_address_code_part = []
+                self.l_junction_counter += 1
             else:
                 if len(self.three_address_code_part) > 0:
                     self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
