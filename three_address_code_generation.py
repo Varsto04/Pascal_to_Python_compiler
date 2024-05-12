@@ -26,7 +26,7 @@ class CustomError(Exception):
 
 
 class ThreeAddressCodeGeneration:
-    def __init__(self, ast: list):
+    def __init__(self, ast: list, functions: list):
         self.ast = ast
         self.l_junction_counter = 0
         self.general_l_junction_counter = 0
@@ -36,6 +36,7 @@ class ThreeAddressCodeGeneration:
         self.three_address_code_part_copy = []
         self.name_function_procedure = ''
         self.flag_function_procedure = False
+        self.functions = functions
 
     def __dfs(self, ast):
         if ast[0] in ['if', 'for', 'while']:
@@ -145,6 +146,26 @@ class ThreeAddressCodeGeneration:
             self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
             self.three_address_code[f'L{self.l_junction_counter}'].append(
                 ['CALL', f'{ast[0]}', mas_output_data])
+        if self.functions.count(ast[0]) != 0:
+            mas_output_data = []
+            def getting_output_data(output_data):
+                for item in output_data:
+                    if isinstance(item, list):
+                        getting_output_data(item)
+                    else:
+                        if item != ',':
+                            mas_output_data.append(item)
+
+            if isinstance(ast[2], list):
+                getting_output_data(ast[2])
+            else:
+                mas_output_data = [ast[2]]
+            self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
+            self.t_counter += 1
+            time_variable_t = f't{self.t_counter}'
+            self.three_address_code[f'L{self.l_junction_counter}'].append(
+                [time_variable_t, ':=', 'CALL', f'{ast[0]}', mas_output_data])
+            return time_variable_t
         if ast[0] == 'function' or ast[0] == 'procedure':
             self.flag_function_procedure = True
             self.name_function_procedure = ast[1]

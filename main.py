@@ -57,6 +57,14 @@ def main():
     print('----Retrieving Symbol Tables----')
     for name_table in symbol_table:
         print(symbol_table[name_table].symbols, name_table)
+    constants = []
+    functions = []
+    for name_table in symbol_table:
+        for name_ident in symbol_table[name_table].symbols:
+            if symbol_table[name_table].symbols[name_ident][0] is not None:
+                constants.append(name_ident)
+            elif symbol_table[name_table].symbols[name_ident][1] == 'function':
+                functions.append(name_ident)
 
     print()
     print('----Retrieving AST----')
@@ -65,12 +73,12 @@ def main():
 
     print()
     print('----Semantic Analysis----')
-    semantic_analysis = SemanticAnalysis(ast, symbol_table)
+    semantic_analysis = SemanticAnalysis(ast, symbol_table, constants, functions)
     semantic_analysis.start()
 
     print()
     print('----Receiving three-address code----')
-    three_address_code_generation = ThreeAddressCodeGeneration(ast)
+    three_address_code_generation = ThreeAddressCodeGeneration(ast, functions)
     three_address_code_generation.start()
 
 
