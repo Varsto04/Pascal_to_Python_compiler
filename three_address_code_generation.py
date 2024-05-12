@@ -128,9 +128,23 @@ class ThreeAddressCodeGeneration:
                 ['goto', f'L{self.l_junction_counter + 1}'])
             self.three_address_code[f'L{l_junction_counter + 1}'] = [['goto', f'L{l_junction_counter + 2}']]
             self.l_junction_counter += 1
-        if ast[0] == 'writeln' or ast[0] == 'println':
-            print(ast)
-            print(self.three_address_code_part)
+        if ast[0] == 'write' or ast[0] == 'read':
+            mas_output_data = []
+            def getting_output_data(output_data):
+                for item in output_data:
+                    if isinstance(item, list):
+                        getting_output_data(item)
+                    else:
+                        if item != ',':
+                            mas_output_data.append(item)
+
+            if isinstance(ast[2], list):
+                getting_output_data(ast[2])
+            else:
+                mas_output_data = [ast[2]]
+            self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
+            self.three_address_code[f'L{self.l_junction_counter}'].append(
+                ['CALL', f'{ast[0]}', mas_output_data])
         if ast[0] == 'function' or ast[0] == 'procedure':
             self.flag_function_procedure = True
             self.name_function_procedure = ast[1]
