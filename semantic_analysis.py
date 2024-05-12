@@ -8,7 +8,7 @@ class CustomError(Exception):
 
 
 class SemanticAnalysis:
-    def __init__(self, ast: list, symbol_table):
+    def __init__(self, ast: list, symbol_table, constants: list, functions: list):
         del ast[0]
         self.ast = ast
         self.symbol_table = symbol_table
@@ -18,14 +18,8 @@ class SemanticAnalysis:
         self.declared_variables = [[key for key in self.symbol_table['global'].symbols]]
         self.symbol_table_stack = {}
         self.symbol_table_stack['global'] = self.symbol_table['global'].symbols
-        self.constants = []
-        self.functions = []
-        for name_table in self.symbol_table:
-            for name_ident in self.symbol_table[name_table].symbols:
-                if self.symbol_table[name_table].symbols[name_ident][0] is not None:
-                    self.constants.append(name_ident)
-                elif self.symbol_table[name_table].symbols[name_ident][1] == 'function':
-                    self.functions.append(name_ident)
+        self.constants = constants
+        self.functions = functions
         self.all_kinds_data_types_binary_operations = {
             '+': (('integer', 'integer'), ('integer', 'real'), ('real', 'integer'), ('real', 'real'),
                   ('string', 'string')),
