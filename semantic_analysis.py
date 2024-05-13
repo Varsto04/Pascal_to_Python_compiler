@@ -103,6 +103,20 @@ class SemanticAnalysis:
                             number_arguments_passed = self.__count_elements_without_commas(ast[2])
                             if number_arguments_expected != number_arguments_passed:
                                 raise CustomError(f"TypeError: '{number_arguments_passed}' arguments were passed to the '{item}' function, but '{number_arguments_expected}' were expected")
+                            mas_passed_function_arguments = []
+                            def getting_output_data(output_data):
+                                for item in output_data:
+                                    if isinstance(item, list):
+                                        getting_output_data(item)
+                                    else:
+                                        if item != ',':
+                                            mas_passed_function_arguments.append(item)
+                            getting_output_data(ast[2])
+                            for i in range(0, len(mas_passed_function_arguments)):
+                                data_type_passed_argument = self.__define_data_type(mas_passed_function_arguments[i])[1]
+                                expected_data_type_argument = self.__getting_data_about_variable(item)[4][i]
+                                if data_type_passed_argument != expected_data_type_argument:
+                                    raise CustomError(f"TypeError: an argument type with data type '{expected_data_type_argument}' is expected in the function '{item}', and '{mas_passed_function_arguments[i]}' with data type '{data_type_passed_argument}' was passed")
         if ast[0] == '/' and ast[2] == 0:
             raise CustomError(f"ZeroDivisionError: division by zero in '{ast}'")
         if ast[0] in ['+', '-', '/', '*', 'and', 'or', '>', '<', '<=', '>=', '=', '<>', 'mod', 'div', 'not', ':=']:
