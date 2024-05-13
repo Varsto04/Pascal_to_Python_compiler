@@ -113,7 +113,7 @@ class SemanticAnalysis:
                                             mas_passed_function_arguments.append(item)
                             getting_output_data(ast[2])
                             for i in range(0, len(mas_passed_function_arguments)):
-                                data_type_passed_argument = self.__define_data_type(mas_passed_function_arguments[i])[1]
+                                data_type_passed_argument = self.__define_data_type(mas_passed_function_arguments[i])
                                 expected_data_type_argument = self.__getting_data_about_variable(item)[4][i]
                                 if data_type_passed_argument != expected_data_type_argument:
                                     raise CustomError(f"TypeError: an argument type with data type '{expected_data_type_argument}' is expected in the function '{item}', and '{mas_passed_function_arguments[i]}' with data type '{data_type_passed_argument}' was passed")
@@ -172,16 +172,10 @@ class SemanticAnalysis:
     def __define_data_type(self, data):
         if isinstance(data, list):
             return self.last_data_type
-        try:
-            int(data)
-            return 'integer'
-        except ValueError:
-            pass
-        try:
-            float(data)
-            return 'real'
-        except ValueError:
-            pass
+        if isinstance(data, float):
+            return "real"
+        if isinstance(data, int):
+            return "integer"
         if str(data) == 'True' or str(data) == 'False':
             return 'boolean'
         elif re.compile(r'[A-Za-z_][\w_]*').match(str(data)) and tokens.count(str(data)) == 0 and \
