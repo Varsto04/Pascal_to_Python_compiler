@@ -26,7 +26,7 @@ class CustomError(Exception):
 
 
 class ThreeAddressCodeGeneration:
-    def __init__(self, ast: list, functions: list):
+    def __init__(self, ast: list, functions: list, constants: dict):
         self.ast = ast
         self.l_junction_counter = 0
         self.general_l_junction_counter = 0
@@ -37,6 +37,8 @@ class ThreeAddressCodeGeneration:
         self.name_function_procedure = ''
         self.flag_function_procedure = False
         self.functions = functions
+        self.constants = constants
+        self.constants_without_values = list(self.constants.keys())
         self.storage_time_variables_t = {}
 
     def __dfs(self, ast):
@@ -65,7 +67,8 @@ class ThreeAddressCodeGeneration:
             if isinstance(item, list):
                 ast[index] = self.__dfs(item)
             else:
-                pass
+                if self.constants_without_values.count(item) != 0:
+                    ast[index] = self.constants[item]
         if ast[0] in ['+', '-', '/', '*', 'mod', 'div'] and len(ast) == 3:
             if ((isinstance(ast[1], str) and ast[1].count('"') != 0) or isinstance(ast[1], float) or isinstance(ast[1], int)) \
                     and ((isinstance(ast[2], str) and ast[2].count('"') != 0) or isinstance(ast[2], float) or isinstance(ast[2], int)):
@@ -186,6 +189,7 @@ class ThreeAddressCodeGeneration:
             self.flag_function_procedure = True
             self.name_function_procedure = ast[1]
         if ast[0] == 'begin':
+            self.storage_time_variables_t = {}
             if self.flag_function_procedure:
                 self.three_address_code[self.name_function_procedure] = self.three_address_code_part
                 self.flag_function_procedure = False
