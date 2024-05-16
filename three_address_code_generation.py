@@ -240,13 +240,7 @@ class ThreeAddressCodeGeneration:
     def start(self):
         try:
             self.ast = self.__dfs(self.ast)
-            for key, value in self.full_three_address_code.items():
-                print(key)
-                for key2, value2 in value.items():
-                    print("\t", key2)
-                    for value_part in value2:
-                        print("\t", "\t", value_part)
-            # print(self.three_address_code)
+            return self.full_three_address_code
         except CustomError as error_message:
             print(f"{error_message}")
             sys.exit()
