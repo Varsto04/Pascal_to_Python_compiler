@@ -4,6 +4,7 @@ import sys
 import copy
 from semantic_analysis import SemanticAnalysis
 from three_address_code_generation import ThreeAddressCodeGeneration
+from three_address_code_optimisation import Optimisation
 
 
 def reading_data_file(address):
@@ -79,7 +80,19 @@ def main():
     print()
     print('----Receiving three-address code----')
     three_address_code_generation = ThreeAddressCodeGeneration(ast, functions, constants)
-    three_address_code_generation.start()
+    three_address_code = three_address_code_generation.start()
+    function_call_tracking = three_address_code_generation.function_call_tracking
+    for key, value in three_address_code.items():
+        print(key)
+        for key2, value2 in value.items():
+            print("\t", key2)
+            for value_part in value2:
+                print("\t", "\t", value_part)
+
+    print()
+    print('----Optimised three-address code----')
+    three_address_code_optimisation = Optimisation(three_address_code, function_call_tracking)
+    three_address_code_optimisation.start()
 
 
 if __name__ == '__main__':
