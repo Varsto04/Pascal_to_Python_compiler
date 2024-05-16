@@ -31,6 +31,7 @@ class ThreeAddressCodeGeneration:
         self.l_junction_counter = 0
         self.general_l_junction_counter = 0
         self.t_counter = 0
+        self.full_three_address_code = {}
         self.three_address_code = {}
         self.three_address_code_part = []
         self.three_address_code_part_copy = []
@@ -188,16 +189,22 @@ class ThreeAddressCodeGeneration:
         if ast[0] == 'function' or ast[0] == 'procedure':
             self.flag_function_procedure = True
             self.name_function_procedure = ast[1]
+            self.full_three_address_code['main'] = self.three_address_code
+            self.three_address_code = {}
         if ast[0] == 'begin':
             self.storage_time_variables_t = {}
             if self.flag_function_procedure:
-                self.three_address_code[self.name_function_procedure] = self.three_address_code_part
+                # self.three_address_code[self.name_function_procedure] = self.three_address_code_part
+                self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
                 self.flag_function_procedure = False
                 self.three_address_code_part = []
                 self.l_junction_counter += 1
+                self.full_three_address_code[f'{self.name_function_procedure}'] = self.three_address_code
+                self.three_address_code = {}
             else:
                 if len(self.three_address_code_part) > 0:
                     self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
+                self.full_three_address_code['main'] = self.three_address_code
 
         return ast
 
@@ -227,10 +234,12 @@ class ThreeAddressCodeGeneration:
     def start(self):
         try:
             self.ast = self.__dfs(self.ast)
-            for key, value in self.three_address_code.items():
+            for key, value in self.full_three_address_code.items():
                 print(key)
-                for value_part in value:
-                    print("\t", value_part)
+                for key2, value2 in value.items():
+                    print("\t", key2)
+                    for value_part in value2:
+                        print("\t", "\t", value_part)
             # print(self.three_address_code)
         except CustomError as error_message:
             print(f"{error_message}")
