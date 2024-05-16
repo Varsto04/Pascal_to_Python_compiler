@@ -58,6 +58,7 @@ class SemanticAnalysis:
         self.counter_begin = 0
         self.counter_end = 0
         self.flag_function_procedure = False
+        self.name_function_procedure = ''
 
     def __semantic_analysis(self):
         try:
@@ -73,9 +74,9 @@ class SemanticAnalysis:
                 self.__dfs(item)
             else:
                 if item == 'begin':
-                    if self.flag_function_procedure:
-                        self.flag_function_procedure = False
-                    else:
+                    if not self.flag_function_procedure:
+                    #     self.flag_function_procedure = False
+                    # else:
                         self.counter_begin += 1
                         self.nested_block_counter += 1
                         self.name_table = 'nested_block' + str(self.nested_block_counter)
@@ -90,6 +91,7 @@ class SemanticAnalysis:
                 elif item == 'function' or item == 'procedure':
                     self.flag_function_procedure = True
                     self.name_table = ast[1]
+                    self.name_function_procedure = ast[1]
                     self.scope_stack.append(self.name_table)
                     self.declared_variables.append([key for key in self.symbol_table[self.name_table].symbols])
                     self.symbol_table_stack[self.name_table] = self.symbol_table[self.name_table].symbols
@@ -117,6 +119,15 @@ class SemanticAnalysis:
                                 expected_data_type_argument = self.__getting_data_about_variable(item)[4][i]
                                 if data_type_passed_argument != expected_data_type_argument:
                                     raise CustomError(f"TypeError: an argument type with data type '{expected_data_type_argument}' is expected in the function '{item}', and '{mas_passed_function_arguments[i]}' with data type '{data_type_passed_argument}' was passed")
+                        else:
+                            if item in self.functions:
+                                if self.flag_function_procedure:
+                                    if item != self.name_function_procedure:
+                                        raise CustomError(f"NameError: name '{item}' is not defined")
+                                else:
+                                    raise CustomError(f"NameError: name '{item}' is not defined")
+        if ast[0] == 'begin':
+            self.flag_function_procedure = False
         if ast[0] == '/' and ast[2] == 0:
             raise CustomError(f"ZeroDivisionError: division by zero in '{ast}'")
         if ast[0] in ['+', '-', '/', '*', 'and', 'or', '>', '<', '<=', '>=', '=', '<>', 'mod', 'div', 'not', ':=']:
@@ -139,6 +150,12 @@ class SemanticAnalysis:
             if variable_type != self.__define_data_type(ast_part[2]) and \
                     variable_type != 'function' and variable_type != 'procedure':
                 raise CustomError(f"TypeError: The variable '{ast_part[1]}' is defined as '{variable_type}', and it is assigned '{ast_part[2]}'")
+            if self.flag_function_procedure:
+                if self.functions.count(ast_part[1]) != 0 and ast_part[1] == self.name_function_procedure:
+                    expected_type_returned_data = self.__getting_data_about_variable(ast_part[1])[3]
+                    return_type_returned_data = self.__define_data_type(ast_part[2])
+                    if return_type_returned_data != expected_type_returned_data:
+                        raise CustomError(f"TypeError: In the '{ast_part[1]}' function, the return data type '{expected_type_returned_data}' is expected, but the return type is '{return_type_returned_data}'")
         elif ast_part[0] == 'not':
             data_type = self.__define_data_type(ast_part[1])
             if data_type != 'boolean':
