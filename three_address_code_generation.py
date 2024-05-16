@@ -41,6 +41,7 @@ class ThreeAddressCodeGeneration:
         self.constants = constants
         self.constants_without_values = list(self.constants.keys())
         self.storage_time_variables_t = {}
+        self.function_call_tracking = {function: False for function in self.functions}
 
     def __dfs(self, ast):
         if ast[0] in ['if', 'for', 'while']:
@@ -110,9 +111,13 @@ class ThreeAddressCodeGeneration:
                 self.storage_time_variables_t[tuple(ast)] = time_variable_t
                 return time_variable_t
         if ast[0] in [':=']:
-            self.three_address_code_part.append(
-                [ast[1], ':=', ast[2]])
-            self.t_counter += 1
+            if self.functions.count(ast[1]) != 0:
+                self.three_address_code_part.append(
+                    ['RETURN', ast[2]])
+            else:
+                self.three_address_code_part.append(
+                    [ast[1], ':=', ast[2]])
+                self.t_counter += 1
         if ast[0] == 'if':
             self.__inserting_data_into_L_block(f'L{self.l_junction_counter}')
             self.three_address_code[f'L{l_junction_counter}'].append(
@@ -185,6 +190,7 @@ class ThreeAddressCodeGeneration:
             time_variable_t = f't{self.t_counter}'
             self.three_address_code[f'L{self.l_junction_counter}'].append(
                 [time_variable_t, ':=', 'CALL', f'{ast[0]}', mas_output_data])
+            self.function_call_tracking[ast[0]] = True
             return time_variable_t
         if ast[0] == 'function' or ast[0] == 'procedure':
             self.flag_function_procedure = True
