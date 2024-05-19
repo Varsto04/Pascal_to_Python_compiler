@@ -5,6 +5,7 @@ import copy
 from semantic_analysis import SemanticAnalysis
 from three_address_code_generation import ThreeAddressCodeGeneration
 from three_address_code_optimisation import Optimisation
+from assembler_code_generator import AssemblerCodeGeneration
 
 
 def reading_data_file(address):
@@ -92,7 +93,18 @@ def main():
     print()
     print('----Optimised three-address code----')
     three_address_code_optimisation = Optimisation(three_address_code, function_call_tracking)
-    three_address_code_optimisation.start()
+    three_address_code = three_address_code_optimisation.start()
+    for key, value in three_address_code.items():
+        print(key)
+        for key2, value2 in value.items():
+            print("\t", key2)
+            for value_part in value2:
+                print("\t", "\t", value_part)
+
+    print()
+    print('----Assembler x86-64----')
+    assembler_code_generator = AssemblerCodeGeneration(three_address_code, name_file, symbol_table)
+    assembler_code_generator.start()
 
 
 if __name__ == '__main__':

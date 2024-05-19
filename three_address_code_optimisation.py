@@ -10,4 +10,4 @@ class Optimisation:
 
     def start(self):
         self.__optimisation()
-        print(self.three_address_code)
+        return self.three_address_code
