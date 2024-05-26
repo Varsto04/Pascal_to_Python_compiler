@@ -1,5 +1,6 @@
 import re
 import sys
+from collections import OrderedDict
 
 
 class ThreeAddressCodeInstruction:
@@ -32,7 +33,8 @@ class ThreeAddressCodeGeneration:
         self.general_l_junction_counter = 0
         self.t_counter = 0
         self.full_three_address_code = {}
-        self.three_address_code = {}
+        # self.three_address_code = {}
+        self.three_address_code = OrderedDict()
         self.three_address_code_part = []
         self.three_address_code_part_copy = []
         self.name_function_procedure = ''
@@ -40,7 +42,7 @@ class ThreeAddressCodeGeneration:
         self.functions = functions
         self.constants = constants
         self.constants_without_values = list(self.constants.keys())
-        self.storage_time_variables_t = {}
+        # self.storage_time_variables_t = {}
         self.function_call_tracking = {function: False for function in self.functions}
 
     def __dfs(self, ast):
@@ -78,38 +80,38 @@ class ThreeAddressCodeGeneration:
         if ast[0] == '/' and ast[2] in [0, '0']:
             raise CustomError(f"ZeroDivisionError: division by zero in '{ast}'")
         if ast[0] in ['+', '-', '/', '*', 'mod', 'div'] and len(ast) == 3:
-            time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
-            if time_variable_t:
-                return time_variable_t
-            else:
-                self.t_counter += 1
-                time_variable_t = f't{self.t_counter}'
-                self.three_address_code_part.append(
-                    [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1], ast[2])])
-                self.storage_time_variables_t[tuple(ast)] = time_variable_t
-                return time_variable_t
+            # time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
+            # if time_variable_t:
+            #     return time_variable_t
+            # else:
+            self.t_counter += 1
+            time_variable_t = f't{self.t_counter}'
+            self.three_address_code_part.append(
+                [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1], ast[2]), 'tmp'])
+            # self.storage_time_variables_t[tuple(ast)] = time_variable_t
+            return time_variable_t
         if ast[0] in ['=', '>', '<', '>=', '<=', '<>'] and len(ast) == 3:
-            time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
-            if time_variable_t:
-                return time_variable_t
-            else:
-                self.t_counter += 1
-                time_variable_t = f't{self.t_counter}'
-                self.three_address_code_part.append(
-                    [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1], ast[2])])
-                self.storage_time_variables_t[tuple(ast)] = time_variable_t
-                return time_variable_t
+            # time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
+            # if time_variable_t:
+            #     return time_variable_t
+            # else:
+            self.t_counter += 1
+            time_variable_t = f't{self.t_counter}'
+            self.three_address_code_part.append(
+                [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1], ast[2]), 'tmp'])
+            # self.storage_time_variables_t[tuple(ast)] = time_variable_t
+            return time_variable_t
         if ast[0] in ['not', '-'] and len(ast) == 2:
-            time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
-            if time_variable_t:
-                return time_variable_t
-            else:
-                self.t_counter += 1
-                time_variable_t = f't{self.t_counter}'
-                self.three_address_code_part.append(
-                    [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1])])
-                self.storage_time_variables_t[tuple(ast)] = time_variable_t
-                return time_variable_t
+            # time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
+            # if time_variable_t:
+            #     return time_variable_t
+            # else:
+            self.t_counter += 1
+            time_variable_t = f't{self.t_counter}'
+            self.three_address_code_part.append(
+                [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1]), 'tmp'])
+            # self.storage_time_variables_t[tuple(ast)] = time_variable_t
+            return time_variable_t
         if ast[0] in [':=']:
             if self.functions.count(ast[1]) != 0:
                 self.three_address_code_part.append(
@@ -231,11 +233,11 @@ class ThreeAddressCodeGeneration:
             else:
                 return eval(f'{ast_part[1]} // {ast_part[2]}')
 
-    def __check_key_in_dict(self, dictionary, key):
-        if key in dictionary:
-            return dictionary[key]
-        else:
-            return False
+    # def __check_key_in_dict(self, dictionary, key):
+    #     if key in dictionary:
+    #         return dictionary[key]
+    #     else:
+    #         return False
 
     def start(self):
         try:
