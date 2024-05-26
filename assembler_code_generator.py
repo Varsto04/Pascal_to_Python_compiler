@@ -12,6 +12,7 @@ class AssemblerCodeGeneration:
         self.storage_offsets_data_real_type = {}
         self.offset_counter_rbp = 0
         self.LCPI_counter = 0
+        self.type_storage_temporary_variables = {}
 
     def __generate(self):
         # variables_data_section = []
@@ -62,16 +63,41 @@ class AssemblerCodeGeneration:
                                             if arg1_type[1] == 'integer':
                                                 file.write(f'\n\tmov eax, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg1]}]')
                                             elif arg1_type[1] == 'real':
-                                                file.write(f'\n\tmovsd xmm0, qword [rip + {self.storage_offsets_data_real_type[value2_part[2].arg1]}]')
+                                                file.write(f'\n\tmovsd xmm0, qword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg1]}]')
                                             else:
                                                 pass
                                         else:
                                             pass
                                     if arg2_type:
-                                        if arg2_type == 'integer':
-                                            file.write(f'\n\tadd eax, {value2_part[2].arg2}')
+                                        if arg1_type == arg2_type:
+                                            if arg2_type == 'integer':
+                                                file.write(f'\n\tadd eax, {value2_part[2].arg2}')
+                                                self.type_storage_temporary_variables[value2_part[0]] = 'integer'
+                                            if arg2_type == 'real':
+                                                file.write(f'\n\taddsd xmm0, {value2_part[2].arg2}')
+                                                self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                            else:
+                                                pass
                                         else:
-                                            pass
+                                            if re.compile(r't\d+$').match(value2_part[2].arg1):
+                                                temporary_variable_type = self.type_storage_temporary_variables[value2_part[2].arg1]
+                                                if temporary_variable_type == 'real' and arg2_type == 'real':
+                                                    file.write(f'\n\taddsd xmm0, {value2_part[2].arg2}')
+                                                    self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                                elif temporary_variable_type == 'real' and arg2_type == 'integer':
+                                                    file.write(f'\n\tcvtsi2sd xmm1, {value2_part[2].arg2}')
+                                                    file.write(f'\n\taddsd xmm0, xmm1')
+                                                    self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                                elif temporary_variable_type == 'integer' and arg2_type == 'real':
+                                                    file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                                    file.write(f'\n\tmovsd xmm0, {value2_part[2].arg2}')
+                                                    file.write(f'\n\taddsd xmm0, xmm1')
+                                                    self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                                elif temporary_variable_type == 'integer' and arg2_type == 'integer':
+                                                    file.write(f'\n\tadd eax, {value2_part[2].arg2}')
+                                                    self.type_storage_temporary_variables[value2_part[0]] = 'integer'
+                                            else:
+                                                pass
                                     else:
                                         arg2_type = self.__getting_data_about_variable(value2_part[2].arg2)
                                         if arg2_type:
