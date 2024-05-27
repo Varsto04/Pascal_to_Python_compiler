@@ -32,11 +32,11 @@ class AssemblerCodeGeneration:
             ('integer', 'integer', '/'): 'idiv',
         }
         self.function_greater = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetg al\n\tret'
-        self.function_less = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetl al\n\tret'
-        self.function_less_or_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetle al\n\tret'
-        self.function_greater_or_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetge al\n\tret'
-        self.function_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsete al\n\tret'
-        self.function_not_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetne al\n\tret'
+        self.function_less = '\n\nless:\n\tcmp rsi, rdx\n\tsetl al\n\tret'
+        self.function_less_or_equal = '\n\nless_or_equal:\n\tcmp rsi, rdx\n\tsetle al\n\tret'
+        self.function_greater_or_equal = '\n\ngreater_or_equal:\n\tcmp rsi, rdx\n\tsetge al\n\tret'
+        self.function_equal = '\n\nequal:\n\tcmp rsi, rdx\n\tsete al\n\tret'
+        self.function_not_equal = '\n\nnot_equal:\n\tcmp rsi, rdx\n\tsetne al\n\tret'
         self.tracking_comparison_function_calls = {
             'function_greater': False,
             'function_less': False,
@@ -320,7 +320,6 @@ class AssemblerCodeGeneration:
                                         self.tracking_comparison_function_calls['function_equal'] = True
                                     if value2_part[2].op == '<>':
                                         self.tracking_comparison_function_calls['function_not_equal'] = True
-                                    pass
                                     # arg1_type = self.__define_data_type(value2_part[2].arg1)
                                     # arg2_type = self.__define_data_type(value2_part[2].arg2)
                                     # if arg1_type:
@@ -651,7 +650,18 @@ class AssemblerCodeGeneration:
 
             for function_call in self.tracking_comparison_function_calls:
                 if self.tracking_comparison_function_calls[function_call]:
-                    print(function_call)
+                    if function_call == 'function_less':
+                        file.write(self.function_less)
+                    if function_call == 'function_less_or_equal':
+                        file.write(self.function_less_or_equal)
+                    if function_call == 'function_greater':
+                        file.write(self.function_greater)
+                    if function_call == 'function_greater_or_equal':
+                        file.write(self.function_greater_or_equal)
+                    if function_call == 'function_equal':
+                        file.write(self.function_equal)
+                    if function_call == 'function_not_equal':
+                        file.write(self.function_not_equal)
             file.write(data_section)
 
     def __define_data_type(self, data):
