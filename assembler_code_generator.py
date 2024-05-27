@@ -302,24 +302,98 @@ class AssemblerCodeGeneration:
                         elif value2_part[1] == ':=':
                             variable_type = self.__getting_data_about_variable(value2_part[0])
                             if variable_type:
+                                stack_variable_offset = False
                                 if variable_type[1] == 'integer':
-                                    variable_value_data_type = self.__define_data_type(value2_part[2])
-                                    if variable_value_data_type:
-                                        file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], {value2_part[2]}')
-                                    else:
-                                        file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], eax')
-                                    self.storage_offsets_data_integer_type[value2_part[0]] = self.offset_counter_rbp
-                                    self.offset_counter_rbp += 4
+                                    stack_variable_offset = self.__check_key_in_dict(
+                                        self.storage_offsets_data_integer_type, value2_part[0])
                                 if variable_type[1] == 'real':
-                                    variable_value_data_type = self.__define_data_type(value2_part[2])
-                                    if variable_value_data_type:
-                                        file.write(f'\n\tmovss dword [rbp - {self.offset_counter_rbp}], {value2_part[2]}')
-                                    else:
-                                        file.write(f'\n\tmovss dword [rbp - {self.offset_counter_rbp}], xmm0')
-                                    self.storage_offsets_data_real_type[value2_part[0]] = self.offset_counter_rbp
-                                    self.offset_counter_rbp += 4
+                                    stack_variable_offset = self.__check_key_in_dict(
+                                        self.storage_offsets_data_real_type, value2_part[0])
+                                type_variable_value = self.__define_data_type(value2_part[2])
+                                if type_variable_value:
+                                    if type_variable_value == 'integer':
+                                        if stack_variable_offset:
+                                            file.write(f'\n\tmov dword [rbp - {stack_variable_offset[0]}], {value2_part[2]}')
+                                        else:
+                                            file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], {value2_part[2]}')
+                                            self.storage_offsets_data_integer_type[value2_part[0]] = self.offset_counter_rbp
+                                            self.offset_counter_rbp += 4
+                                    if type_variable_value == 'real':
+                                        if stack_variable_offset:
+                                            file.write(f'\n\tmovss dword [rbp - {stack_variable_offset[0]}], {value2_part[2]}')
+                                        else:
+                                            file.write(f'\n\tmovss dword [rbp - {self.offset_counter_rbp}], {value2_part[2]}')
+                                            self.storage_offsets_data_real_type[value2_part[0]] = self.offset_counter_rbp
+                                            self.offset_counter_rbp += 4
+                                    if type_variable_value == 'boolean':
+                                        if type_variable_value == 'True':
+                                            file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], 1')
+                                            self.storage_offsets_data_integer_type[
+                                                value2_part[0]] = self.offset_counter_rbp
+                                            self.offset_counter_rbp += 4
+                                        if type_variable_value == 'False':
+                                            file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], 0')
+                                            self.storage_offsets_data_integer_type[
+                                                value2_part[0]] = self.offset_counter_rbp
+                                            self.offset_counter_rbp += 4
                                 else:
-                                    pass
+                                    type_variable_value = self.__getting_data_about_variable(value2_part[2])
+                                    if type_variable_value:
+                                        if type_variable_value[1] == 'integer':
+                                            if stack_variable_offset:
+                                                file.write(
+                                                    f'\n\tmov dword [rbp - {stack_variable_offset[0]}], dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2]]}]')
+                                            else:
+                                                file.write(
+                                                    f'\n\tmov dword [rbp - {self.offset_counter_rbp}], dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2]]}]')
+                                                self.storage_offsets_data_integer_type[
+                                                    value2_part[0]] = self.offset_counter_rbp
+                                                self.offset_counter_rbp += 4
+                                        if type_variable_value[1] == 'real':
+                                            if stack_variable_offset:
+                                                file.write(
+                                                    f'\n\tmovss dword [rbp - {stack_variable_offset[0]}], dword [rbp - {self.storage_offsets_data_real_type[value2_part[2]]}]')
+                                            else:
+                                                file.write(
+                                                    f'\n\tmovss dword [rbp - {self.offset_counter_rbp}], dword [rbp - {self.storage_offsets_data_real_type[value2_part[2]]}]')
+                                                self.storage_offsets_data_real_type[
+                                                    value2_part[0]] = self.offset_counter_rbp
+                                                self.offset_counter_rbp += 4
+                                        if type_variable_value[1] == 'boolean':
+                                            if type_variable_value == 'True':
+                                                file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], 1')
+                                                self.storage_offsets_data_integer_type[
+                                                    value2_part[0]] = self.offset_counter_rbp
+                                                self.offset_counter_rbp += 4
+                                            if type_variable_value == 'False':
+                                                file.write(f'\n\tmov dword [rbp - {self.offset_counter_rbp}], 0')
+                                                self.storage_offsets_data_integer_type[
+                                                    value2_part[0]] = self.offset_counter_rbp
+                                                self.offset_counter_rbp += 4
+                                    else:
+                                        temporary_variable_type = self.type_storage_temporary_variables[
+                                            value2_part[2]]
+                                        if temporary_variable_type == 'integer':
+                                            if stack_variable_offset:
+                                                file.write(
+                                                    f'\n\tmov dword [rbp - {stack_variable_offset[0]}], eax')
+                                            else:
+                                                file.write(
+                                                    f'\n\tmov dword [rbp - {self.offset_counter_rbp}], eax')
+                                                self.storage_offsets_data_integer_type[
+                                                    value2_part[0]] = self.offset_counter_rbp
+                                                self.offset_counter_rbp += 4
+                                        if temporary_variable_type == 'real':
+                                            if stack_variable_offset:
+                                                file.write(
+                                                    f'\n\tmovss dword [rbp - {stack_variable_offset[0]}], xmm0')
+                                            else:
+                                                file.write(
+                                                    f'\n\tmovss dword [rbp - {self.offset_counter_rbp}], xmm0')
+                                                self.storage_offsets_data_integer_type[
+                                                    value2_part[0]] = self.offset_counter_rbp
+                                                self.offset_counter_rbp += 4
+
             file.write(data_section)
 
     def __define_data_type(self, data):
@@ -338,6 +412,12 @@ class AssemblerCodeGeneration:
             for name_ident in self.symbol_table[name_table].symbols:
                 if name_ident == name_variable:
                     return self.symbol_table[name_table].symbols[name_ident]
+
+    def __check_key_in_dict(self, dictionary, key):
+        try:
+            return [dictionary[key]]
+        except KeyError:
+            return False
 
     def start(self):
         self.__generate()
