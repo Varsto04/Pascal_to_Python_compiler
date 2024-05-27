@@ -90,7 +90,7 @@ class ThreeAddressCodeGeneration:
                 [time_variable_t, ':=', ThreeAddressCodeInstruction(ast[0], ast[1], ast[2]), 'tmp'])
             # self.storage_time_variables_t[tuple(ast)] = time_variable_t
             return time_variable_t
-        if ast[0] in ['=', '>', '<', '>=', '<=', '<>'] and len(ast) == 3:
+        if ast[0] in ['=', '>', '<', '>=', '<=', '<>', 'and', 'or'] and len(ast) == 3:
             # time_variable_t = self.__check_key_in_dict(self.storage_time_variables_t, tuple(ast))
             # if time_variable_t:
             #     return time_variable_t

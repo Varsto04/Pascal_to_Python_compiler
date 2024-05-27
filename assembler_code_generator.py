@@ -37,6 +37,14 @@ class AssemblerCodeGeneration:
         self.function_greater_or_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetge al\n\tret'
         self.function_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsete al\n\tret'
         self.function_not_equal = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetne al\n\tret'
+        self.tracking_comparison_function_calls = {
+            'function_greater': False,
+            'function_less': False,
+            'function_less_or_equal': False,
+            'function_greater_or_equal': False,
+            'function_equal': False,
+            'function_not_equal': False
+        }
 
     def __generate(self):
         with open(f'{self.name_file}.asm', 'w') as file:
@@ -65,7 +73,7 @@ class AssemblerCodeGeneration:
                         if value2_part[1] == ':=' and re.compile(r't\d+$').match(value2_part[0]) and \
                                 value2_part[-1] == 'tmp':
                             if isinstance(value2_part[2], ThreeAddressCodeInstruction):
-                                if value2_part[2].op == '+' or value2_part[2].op == '*' or value2_part[2].op == '-':
+                                if value2_part[2].op == '+' or value2_part[2].op == '*' or value2_part[2].op == '-' or value2_part[2].op == '/':
                                     arg1_type = self.__define_data_type(value2_part[2].arg1)
                                     arg2_type = self.__define_data_type(value2_part[2].arg2)
                                     if arg1_type:
@@ -299,6 +307,253 @@ class AssemblerCodeGeneration:
                                         else:
                                             pass
 
+                                if value2_part[2].op == '>' or value2_part[2].op == '<' or value2_part[2].op == '<=' or value2_part[2].op == '>=':
+                                    if value2_part[2].op == '>':
+                                        self.tracking_comparison_function_calls['function_greater'] = True
+                                    if value2_part[2].op == '<':
+                                        self.tracking_comparison_function_calls['function_less_or_equal'] = True
+                                    if value2_part[2].op == '<=':
+                                        self.tracking_comparison_function_calls['function_greater'] = True
+                                    if value2_part[2].op == '>=':
+                                        self.tracking_comparison_function_calls['function_greater_or_equal'] = True
+                                    if value2_part[2].op == '=':
+                                        self.tracking_comparison_function_calls['function_equal'] = True
+                                    if value2_part[2].op == '<>':
+                                        self.tracking_comparison_function_calls['function_not_equal'] = True
+                                    pass
+                                    # arg1_type = self.__define_data_type(value2_part[2].arg1)
+                                    # arg2_type = self.__define_data_type(value2_part[2].arg2)
+                                    # if arg1_type:
+                                    #     if arg1_type == 'integer':
+                                    #         file.write(f'\n\tmov eax, {value2_part[2].arg1}')
+                                    #     elif arg1_type == 'real':
+                                    #         data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #         binary = struct.pack('f', value2_part[2].arg1)
+                                    #         hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #         data_section += f'\n\tdq {hex_value}'
+                                    #         file.write(f'\n\tmovss xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #         self.LCPI_counter += 1
+                                    # else:
+                                    #     arg1_type = self.__getting_data_about_variable(value2_part[2].arg1)
+                                    #     if arg1_type:
+                                    #         if arg1_type[1] == 'integer':
+                                    #             file.write(f'\n\tmov eax, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg1]}]')
+                                    #         elif arg1_type[1] == 'real':
+                                    #             file.write(f'\n\tmovsd xmm0, qword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg1]}]')
+                                    #     else:
+                                    #         pass
+                                    #
+                                    # arg1_type = self.__define_data_type(value2_part[2].arg1)
+                                    # if arg2_type:
+                                    #     if arg1_type:
+                                    #         if arg1_type == arg2_type:
+                                    #             if arg2_type == 'integer':
+                                    #                 operation = self.storage_register_operation[(arg1_type, arg2_type, value2_part[2].op)]
+                                    #                 file.write(f'\n\t{operation} eax, {value2_part[2].arg2}')
+                                    #                 self.type_storage_temporary_variables[value2_part[0]] = 'integer'
+                                    #             if arg2_type == 'real':
+                                    #                 data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #                 binary = struct.pack('f', value2_part[2].arg2)
+                                    #                 hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #                 data_section += f'\n\tdq {hex_value}'
+                                    #                 operation = self.storage_register_operation[
+                                    #                     (arg1_type, arg2_type, value2_part[2].op)]
+                                    #                 file.write(f'\n\t{operation} xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #                 self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                 self.LCPI_counter += 1
+                                    #         else:
+                                    #             if arg1_type == 'real' and arg2_type == 'integer':
+                                    #                 file.write(f'\n\tcvtsi2sd xmm1, {value2_part[2].arg2}')
+                                    #                 operation = self.storage_register_operation[
+                                    #                     (arg1_type, arg2_type, value2_part[2].op)]
+                                    #                 file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                 self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #             if arg1_type == 'integer' and arg2_type == 'real':
+                                    #                 data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #                 binary = struct.pack('f', value2_part[2].arg2)
+                                    #                 hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #                 data_section += f'\n\tdq {hex_value}'
+                                    #                 file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                    #                 file.write(f'\n\tmovsd xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #                 operation = self.storage_register_operation[
+                                    #                     (arg1_type, arg2_type, value2_part[2].op)]
+                                    #                 file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                 self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                 self.LCPI_counter += 1
+                                    #     else:
+                                    #         arg1_type = self.__getting_data_about_variable(value2_part[2].arg1)
+                                    #         if arg1_type:
+                                    #             if arg1_type[1] == arg2_type:
+                                    #                 if arg2_type == 'integer':
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type[1], arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} eax, {value2_part[2].arg2}')
+                                    #                     self.type_storage_temporary_variables[
+                                    #                         value2_part[0]] = 'integer'
+                                    #                 if arg2_type == 'real':
+                                    #                     data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #                     binary = struct.pack('f', value2_part[2].arg2)
+                                    #                     hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #                     data_section += f'\n\tdq {hex_value}'
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type[1], arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                     self.LCPI_counter += 1
+                                    #             else:
+                                    #                 if arg1_type[1] == 'real' and arg2_type == 'integer':
+                                    #                     file.write(f'\n\tcvtsi2sd xmm1, {value2_part[2].arg2}')
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type[1], arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                 elif arg1_type[1] == 'integer' and arg2_type == 'real':
+                                    #                     data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #                     binary = struct.pack('f', value2_part[2].arg2)
+                                    #                     hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #                     data_section += f'\n\tdq {hex_value}'
+                                    #                     file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                    #                     file.write(f'\n\tmovsd xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type[1], arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                     self.LCPI_counter += 1
+                                    #         else:
+                                    #             if re.compile(r't\d+$').match(value2_part[2].arg1):
+                                    #                 temporary_variable_type = self.type_storage_temporary_variables[value2_part[2].arg1]
+                                    #                 if temporary_variable_type == 'real' and arg2_type == 'real':
+                                    #                     data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #                     binary = struct.pack('f', value2_part[2].arg2)
+                                    #                     hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #                     data_section += f'\n\tdq {hex_value}'
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (temporary_variable_type, arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                     self.LCPI_counter += 1
+                                    #                 elif temporary_variable_type == 'real' and arg2_type == 'integer':
+                                    #                     file.write(f'\n\tcvtsi2sd xmm1, {value2_part[2].arg2}')
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (temporary_variable_type, arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                 elif temporary_variable_type == 'integer' and arg2_type == 'real':
+                                    #                     data_section += f'\nLCPI0_{self.LCPI_counter}:'
+                                    #                     binary = struct.pack('f', value2_part[2].arg2)
+                                    #                     hex_value = hex(int.from_bytes(binary, byteorder='little'))
+                                    #                     data_section += f'\n\tdq {hex_value}'
+                                    #                     file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                    #                     file.write(f'\n\tmovsd xmm0, [LCPI0_{self.LCPI_counter}]')
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (temporary_variable_type, arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                     self.LCPI_counter += 1
+                                    #                 elif temporary_variable_type == 'integer' and arg2_type == 'integer':
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (temporary_variable_type, arg2_type, value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} eax, {value2_part[2].arg2}')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'integer'
+                                    # else:
+                                    #     arg2_type = self.__getting_data_about_variable(value2_part[2].arg2)
+                                    #     if arg2_type:
+                                    #         if arg1_type:
+                                    #             if arg1_type == arg2_type[1]:
+                                    #                 if arg2_type[1] == 'integer':
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type, arg2_type[1], value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} eax, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                    #                     self.type_storage_temporary_variables[
+                                    #                         value2_part[0]] = 'integer'
+                                    #                 if arg2_type[1] == 'real':
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type, arg2_type[1], value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #             else:
+                                    #                 if arg1_type == 'real' and arg2_type[1] == 'integer':
+                                    #                     file.write(f'\n\tcvtsi2sd xmm1, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type, arg2_type[1], value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #                 if arg1_type == 'integer' and arg2_type[1] == 'real':
+                                    #                     file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                    #                     file.write(f'\n\tmovsd xmm0, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                    #                     operation = self.storage_register_operation[
+                                    #                         (arg1_type, arg2_type[1], value2_part[2].op)]
+                                    #                     file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
+                                    #         else:
+                                    #             arg1_type = self.__getting_data_about_variable(value2_part[2].arg1)
+                                    #             if arg1_type:
+                                    #                 if arg1_type[1] == arg2_type[1]:
+                                    #                     if arg2_type[1] == 'integer':
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (arg1_type[1], arg2_type[1], value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} eax, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'integer'
+                                    #                     if arg2_type[1] == 'real':
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (arg1_type[1], arg2_type[1], value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} xmm0, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'real'
+                                    #                 else:
+                                    #                     if arg1_type[1] == 'real' and arg2_type[1] == 'integer':
+                                    #                         file.write(f'\n\tcvtsi2sd xmm1, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (arg1_type[1], arg2_type[1], value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'real'
+                                    #                     elif arg1_type[1] == 'integer' and arg2_type[1] == 'real':
+                                    #                         file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                    #                         file.write(f'\n\tmovsd xmm0, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (arg1_type[1], arg2_type[1], value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'real'
+                                    #             else:
+                                    #                 if re.compile(r't\d+$').match(value2_part[2].arg1):
+                                    #                     temporary_variable_type = self.type_storage_temporary_variables[
+                                    #                         value2_part[2].arg1]
+                                    #                     if temporary_variable_type == 'real' and arg2_type[1] == 'real':
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (temporary_variable_type, arg2_type[1], value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} xmm0, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'real'
+                                    #                     elif temporary_variable_type == 'real' and arg2_type[1] == 'integer':
+                                    #                         file.write(f'\n\tcvtsi2sd xmm1, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (temporary_variable_type, arg2_type[1],
+                                    #                              value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'real'
+                                    #                     elif temporary_variable_type == 'integer' and arg2_type[1] == 'real':
+                                    #                         file.write(f'\n\tcvtsi2sd xmm1, eax')
+                                    #                         file.write(f'\n\tmovsd xmm0, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (temporary_variable_type, arg2_type[1],
+                                    #                              value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} xmm0, xmm1')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'real'
+                                    #                     elif temporary_variable_type == 'integer' and arg2_type[1] == 'integer':
+                                    #                         operation = self.storage_register_operation[
+                                    #                             (temporary_variable_type, arg2_type[1],
+                                    #                              value2_part[2].op)]
+                                    #                         file.write(f'\n\t{operation} eax, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                    #                         self.type_storage_temporary_variables[
+                                    #                             value2_part[0]] = 'integer'
+                                    #     else:
+                                    #         pass
+
                         elif value2_part[1] == ':=':
                             variable_type = self.__getting_data_about_variable(value2_part[0])
                             if variable_type:
@@ -394,6 +649,9 @@ class AssemblerCodeGeneration:
                                                     value2_part[0]] = self.offset_counter_rbp
                                                 self.offset_counter_rbp += 4
 
+            for function_call in self.tracking_comparison_function_calls:
+                if self.tracking_comparison_function_calls[function_call]:
+                    print(function_call)
             file.write(data_section)
 
     def __define_data_type(self, data):

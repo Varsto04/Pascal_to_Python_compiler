@@ -130,7 +130,7 @@ class SemanticAnalysis:
             self.flag_function_procedure = False
         if ast[0] == '/' and ast[2] == 0:
             raise CustomError(f"ZeroDivisionError: division by zero in '{ast}'")
-        if ast[0] in ['+', '-', '/', '*', 'and', 'or', '>', '<', '<=', '>=', '=', '<>', 'mod', 'div', 'not', ':=']:
+        if ast[0] in ['+', '-', '/', '*', 'mod', 'div', 'not', ':=']:
             self.__data_type_checking(ast)
 
     def __count_elements_without_commas(self, arr):
