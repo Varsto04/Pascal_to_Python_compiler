@@ -31,12 +31,12 @@ class AssemblerCodeGeneration:
             ('real', 'real', '/'): 'divsd',
             ('integer', 'integer', '/'): 'idiv',
         }
-        self.function_greater = '\n\ngreater:\n\tcmp rsi, rdx\n\tsetg al\n\tret'
-        self.function_less = '\n\nless:\n\tcmp rsi, rdx\n\tsetl al\n\tret'
-        self.function_less_or_equal = '\n\nless_or_equal:\n\tcmp rsi, rdx\n\tsetle al\n\tret'
-        self.function_greater_or_equal = '\n\ngreater_or_equal:\n\tcmp rsi, rdx\n\tsetge al\n\tret'
-        self.function_equal = '\n\nequal:\n\tcmp rsi, rdx\n\tsete al\n\tret'
-        self.function_not_equal = '\n\nnot_equal:\n\tcmp rsi, rdx\n\tsetne al\n\tret'
+        self.function_greater = '\n\ngreater:\n\tcmp eax, ebx\n\tsetg al\n\tret'
+        self.function_less = '\n\nless:\n\tcmp eax, ebx\n\tsetl al\n\tret'
+        self.function_less_or_equal = '\n\nless_or_equal:\n\tcmp eax, ebx\n\tsetle al\n\tret'
+        self.function_greater_or_equal = '\n\ngreater_or_equal:\n\tcmp eax, ebx\n\tsetge al\n\tret'
+        self.function_equal = '\n\nequal:\n\tcmp eax, ebx\n\tsete al\n\tret'
+        self.function_not_equal = '\n\nnot_equal:\n\tcmp eax, ebx\n\tsetne al\n\tret'
         self.tracking_comparison_function_calls = {
             'function_greater': False,
             'function_less': False,
@@ -312,21 +312,21 @@ class AssemblerCodeGeneration:
                                     arg2_type = self.__define_data_type(value2_part[2].arg2)
                                     if arg1_type:
                                         if arg1_type == 'integer':
-                                            file.write(f'\n\tmov rsi, {value2_part[2].arg1}')
+                                            file.write(f'\n\tmov eax, {value2_part[2].arg1}')
                                         elif arg1_type == 'real':
                                             data_section += f'\nLCPI0_{self.LCPI_counter}:'
                                             binary = struct.pack('f', value2_part[2].arg1)
                                             hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                             data_section += f'\n\tdq {hex_value}'
-                                            file.write(f'\n\tmovsd rsi, [LCPI0_{self.LCPI_counter}]')
+                                            file.write(f'\n\tmovsd eax, [LCPI0_{self.LCPI_counter}]')
                                             self.LCPI_counter += 1
                                     else:
                                         arg1_type = self.__getting_data_about_variable(value2_part[2].arg1)
                                         if arg1_type:
                                             if arg1_type[1] == 'integer':
-                                                file.write(f'\n\tmov rsi, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg1]}]')
+                                                file.write(f'\n\tmov eax, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg1]}]')
                                             elif arg1_type[1] == 'real':
-                                                file.write(f'\n\tmovsd rsi, qword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg1]}]')
+                                                file.write(f'\n\tmovsd eax, qword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg1]}]')
                                         else:
                                             pass
 
@@ -335,27 +335,27 @@ class AssemblerCodeGeneration:
                                         if arg1_type:
                                             if arg1_type == arg2_type:
                                                 if arg2_type == 'integer':
-                                                    file.write(f'\n\tmov rdx, {value2_part[2].arg2}')
+                                                    file.write(f'\n\tmov ebx, {value2_part[2].arg2}')
                                                     self.type_storage_temporary_variables[value2_part[0]] = 'integer'
                                                 if arg2_type == 'real':
                                                     data_section += f'\nLCPI0_{self.LCPI_counter}:'
                                                     binary = struct.pack('f', value2_part[2].arg2)
                                                     hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                                     data_section += f'\n\tdq {hex_value}'
-                                                    file.write(f'\n\tmovsd rdx, [LCPI0_{self.LCPI_counter}]')
+                                                    file.write(f'\n\tmovsd ebx, [LCPI0_{self.LCPI_counter}]')
                                                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                     self.LCPI_counter += 1
                                             else:
                                                 if arg1_type == 'real' and arg2_type == 'integer':
-                                                    file.write(f'\n\tcvtsi2sd rdx, {value2_part[2].arg2}')
+                                                    file.write(f'\n\tcvtsi2sd ebx, {value2_part[2].arg2}')
                                                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                 if arg1_type == 'integer' and arg2_type == 'real':
                                                     data_section += f'\nLCPI0_{self.LCPI_counter}:'
                                                     binary = struct.pack('f', value2_part[2].arg2)
                                                     hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                                     data_section += f'\n\tdq {hex_value}'
-                                                    file.write(f'\n\tcvtsi2sd rsi, rsi')
-                                                    file.write(f'\n\tmovsd rdx, [LCPI0_{self.LCPI_counter}]')
+                                                    file.write(f'\n\tcvtsi2sd eax, eax')
+                                                    file.write(f'\n\tmovsd ebx, [LCPI0_{self.LCPI_counter}]')
                                                     self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                     self.LCPI_counter += 1
                                         else:
@@ -363,7 +363,7 @@ class AssemblerCodeGeneration:
                                             if arg1_type:
                                                 if arg1_type[1] == arg2_type:
                                                     if arg2_type == 'integer':
-                                                        file.write(f'\n\tmov rdx, {value2_part[2].arg2}')
+                                                        file.write(f'\n\tmov ebx, {value2_part[2].arg2}')
                                                         self.type_storage_temporary_variables[
                                                             value2_part[0]] = 'integer'
                                                     if arg2_type == 'real':
@@ -371,20 +371,20 @@ class AssemblerCodeGeneration:
                                                         binary = struct.pack('f', value2_part[2].arg2)
                                                         hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                                         data_section += f'\n\tdq {hex_value}'
-                                                        file.write(f'\n\tmov rdx, [LCPI0_{self.LCPI_counter}]')
+                                                        file.write(f'\n\tmov ebx, [LCPI0_{self.LCPI_counter}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                         self.LCPI_counter += 1
                                                 else:
                                                     if arg1_type[1] == 'real' and arg2_type == 'integer':
-                                                        file.write(f'\n\tcvtsi2sd rdx, {value2_part[2].arg2}')
+                                                        file.write(f'\n\tcvtsi2sd ebx, {value2_part[2].arg2}')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                     elif arg1_type[1] == 'integer' and arg2_type == 'real':
                                                         data_section += f'\nLCPI0_{self.LCPI_counter}:'
                                                         binary = struct.pack('f', value2_part[2].arg2)
                                                         hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                                         data_section += f'\n\tdq {hex_value}'
-                                                        file.write(f'\n\tcvtsi2sd rsi, rsi')
-                                                        file.write(f'\n\tmovsd rdx, [LCPI0_{self.LCPI_counter}]')
+                                                        file.write(f'\n\tcvtsi2sd eax, eax')
+                                                        file.write(f'\n\tmovsd ebx, [LCPI0_{self.LCPI_counter}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                         self.LCPI_counter += 1
                                             else:
@@ -395,23 +395,23 @@ class AssemblerCodeGeneration:
                                                         binary = struct.pack('f', value2_part[2].arg2)
                                                         hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                                         data_section += f'\n\tdq {hex_value}'
-                                                        file.write(f'\n\tmovsd rdx, [LCPI0_{self.LCPI_counter}]')
+                                                        file.write(f'\n\tmovsd ebx, [LCPI0_{self.LCPI_counter}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                         self.LCPI_counter += 1
                                                     elif temporary_variable_type == 'real' and arg2_type == 'integer':
-                                                        file.write(f'\n\tcvtsi2sd rdx, {value2_part[2].arg2}')
+                                                        file.write(f'\n\tcvtsi2sd ebx, {value2_part[2].arg2}')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                     elif temporary_variable_type == 'integer' and arg2_type == 'real':
                                                         data_section += f'\nLCPI0_{self.LCPI_counter}:'
                                                         binary = struct.pack('f', value2_part[2].arg2)
                                                         hex_value = hex(int.from_bytes(binary, byteorder='little'))
                                                         data_section += f'\n\tdq {hex_value}'
-                                                        file.write(f'\n\tcvtsi2sd rsi, rsi')
-                                                        file.write(f'\n\tmovsd rdx, [LCPI0_{self.LCPI_counter}]')
+                                                        file.write(f'\n\tcvtsi2sd eax, eax')
+                                                        file.write(f'\n\tmovsd ebx, [LCPI0_{self.LCPI_counter}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                         self.LCPI_counter += 1
                                                     elif temporary_variable_type == 'integer' and arg2_type == 'integer':
-                                                        file.write(f'\n\tmov rdx, {value2_part[2].arg2}')
+                                                        file.write(f'\n\tmov ebx, {value2_part[2].arg2}')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'integer'
                                     else:
                                         arg2_type = self.__getting_data_about_variable(value2_part[2].arg2)
@@ -419,40 +419,40 @@ class AssemblerCodeGeneration:
                                             if arg1_type:
                                                 if arg1_type == arg2_type[1]:
                                                     if arg2_type[1] == 'integer':
-                                                        file.write(f'\n\tmov rdx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                                        file.write(f'\n\tmov ebx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
                                                         self.type_storage_temporary_variables[
                                                             value2_part[0]] = 'integer'
                                                     if arg2_type[1] == 'real':
-                                                        file.write(f'\n\tmovsd rdx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                                        file.write(f'\n\tmovsd ebx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                 else:
                                                     if arg1_type == 'real' and arg2_type[1] == 'integer':
-                                                        file.write(f'\n\tcvtsi2sd rdx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                                        file.write(f'\n\tcvtsi2sd ebx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                                     if arg1_type == 'integer' and arg2_type[1] == 'real':
-                                                        file.write(f'\n\tcvtsi2sd rsi, rsi')
-                                                        file.write(f'\n\tmovsd rdx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                                        file.write(f'\n\tcvtsi2sd eax, eax')
+                                                        file.write(f'\n\tmovsd ebx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
                                                         self.type_storage_temporary_variables[value2_part[0]] = 'real'
                                             else:
                                                 arg1_type = self.__getting_data_about_variable(value2_part[2].arg1)
                                                 if arg1_type:
                                                     if arg1_type[1] == arg2_type[1]:
                                                         if arg2_type[1] == 'integer':
-                                                            file.write(f'\n\tmov rdx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tmov ebx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'integer'
                                                         if arg2_type[1] == 'real':
-                                                            file.write(f'\n\tmovsd rdx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tmovsd ebx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'real'
                                                     else:
                                                         if arg1_type[1] == 'real' and arg2_type[1] == 'integer':
-                                                            file.write(f'\n\tcvtsi2sd rdx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tcvtsi2sd ebx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'real'
                                                         elif arg1_type[1] == 'integer' and arg2_type[1] == 'real':
-                                                            file.write(f'\n\tcvtsi2sd rsi, rsi')
-                                                            file.write(f'\n\tmovsd rdx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tcvtsi2sd eax, eax')
+                                                            file.write(f'\n\tmovsd ebx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'real'
                                                 else:
@@ -460,20 +460,20 @@ class AssemblerCodeGeneration:
                                                         temporary_variable_type = self.type_storage_temporary_variables[
                                                             value2_part[2].arg1]
                                                         if temporary_variable_type == 'real' and arg2_type[1] == 'real':
-                                                            file.write(f'\n\tmovsd rdx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tmovsd ebx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'real'
                                                         elif temporary_variable_type == 'real' and arg2_type[1] == 'integer':
-                                                            file.write(f'\n\tcvtsi2sd rdx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tcvtsi2sd ebx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'real'
                                                         elif temporary_variable_type == 'integer' and arg2_type[1] == 'real':
-                                                            file.write(f'\n\tcvtsi2sd rsi, rsi')
-                                                            file.write(f'\n\tmovsd rdx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tcvtsi2sd eax, eax')
+                                                            file.write(f'\n\tmovsd ebx, dword [rbp - {self.storage_offsets_data_real_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'real'
                                                         elif temporary_variable_type == 'integer' and arg2_type[1] == 'integer':
-                                                            file.write(f'\n\tmov rdx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
+                                                            file.write(f'\n\tmov ebx, dword [rbp - {self.storage_offsets_data_integer_type[value2_part[2].arg2]}]')
                                                             self.type_storage_temporary_variables[
                                                                 value2_part[0]] = 'integer'
                                         else:
