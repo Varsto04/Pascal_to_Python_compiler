@@ -83,6 +83,7 @@ def main():
     three_address_code_generation = ThreeAddressCodeGeneration(ast, functions, constants)
     three_address_code = three_address_code_generation.start()
     function_call_tracking = three_address_code_generation.function_call_tracking
+    print(three_address_code)
     for key, value in three_address_code.items():
         print(key)
         for key2, value2 in value.items():
