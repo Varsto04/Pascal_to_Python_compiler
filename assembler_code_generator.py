@@ -592,6 +592,10 @@ class AssemblerCodeGeneration:
                                                     value2_part[0]] = self.offset_counter_rbp
                                                 self.offset_counter_rbp += 4
 
+                        if value2_part[0] == 'if':
+                            file.write(f'\n\tcmp al, 1')
+                            file.write(f'\n\tje _{value2_part[-1]}')
+
             for function_call in self.tracking_comparison_function_calls:
                 if self.tracking_comparison_function_calls[function_call]:
                     if function_call == 'function_less':
